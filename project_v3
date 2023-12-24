@@ -1,0 +1,279 @@
+import sys
+from PyQt5.QtWidgets import QLabel, QLCDNumber, QLineEdit, QFontDialog
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5 import QtCore, QtGui, QtWidgets
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout
+import io
+from PIL import Image, ImageOps, ImageFilter
+from PIL.ImageQt import ImageQt
+from scipy.interpolate import UnivariateSpline
+
+
+df = pd.read_excel("neft_dataset.xlsx")
+oil = list(map(lambda x: int(x), df['Нефть(тыс.т)']))
+count = list(map(lambda x: int(x), df['Количество используемых скважин']))
+date = list(map(lambda x: str(x), df['Дата']))
+water = list(map(lambda x: int(x), df['Жидкости всего(тыс.т)']))
+procentwater = list(map(lambda x: float(str(x)[:5]), df['Обводненность(%)']))
+
+class dataset:
+    def __init__(self, oil, count, date, water, procentwater):
+        self.oil = oil
+        self.count = count
+        self.date = date
+        self.water = water
+        self.procentwater = procentwater
+        for i in range(len(self.date)):
+            if '.' in self.date[i]:
+                self.date[i] = int(self.date[i][4])
+            else:
+                self.date[i] = self.date[i].replace(' 00:00:00', '')
+                self.date[i] = int(self.date[i].replace('-', '.')[5:7])
+        self.arr_oil = np.asarray(self.oil)
+        self.arr_count = np.array(self.count)
+        self.arr_date = np.array(self.date)
+        self.arr_water = np.array(self.water)
+        self.arr_pw = np.array(self.procentwater)
+
+    def counter(self):
+        for i in range(len(self.date)):
+            if '.' in self.date[i]:
+                self.date[i] = int(self.date[i][4])
+            else:
+                self.date[i] = self.date[i].replace(' 00:00:00', '')
+                self.date[i] = int(self.date[i].replace('-', '.')[5:7])
+        self.arr_oil = np.asarray(self.oil)
+        self.arr_count = np.array(self.count)
+        self.arr_date = np.array(self.date)
+        self.arr_water = np.array(self.water)
+        self.arr_pw = np.array(self.procentwater)
+
+    def linear(self):
+        x = self.arr_date.reshape(-1, 1)
+        y = self.arr_oil
+        model = LinearRegression()
+        model.fit(x, y)
+        plt.scatter(x, y, color="green")
+        y_pred = model.predict(x)
+        plt.plot(x, y_pred, linewidth=1.0, color='black')
+        plt.show()
+        fig = plt.plot(x, y_pred, linewidth=1.0, color='black')
+        return fig
+
+    def plot_lib(self):
+        x = self.arr_date.reshape(-1, 1)
+        y = self.arr_oil
+        model = LinearRegression()
+        model.fit(x, y)
+        plt.scatter(x, y, color="green")
+        y_pred = model.predict(x)
+        plt.plot(x, y_pred, linewidth=1.0, color='black')
+        fig = plt.gcf()
+
+        def fig2img(fig):
+            buf = io.BytesIO()
+            fig.savefig(buf)
+            buf.seek(0)
+            img = Image.open(buf)
+            return img
+
+        img = fig2img(fig)
+        img = img.convert("RGBA")
+        qim = ImageQt(img)
+        self.pixmap = QPixmap(QImage(qim))
+        label_plt = QLabel()
+        label_plt.setPixmap(self.pixmap)
+        return label_plt
+
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("zxc_neft_tools")
+        MainWindow.resize(800, 600)
+        # MainWindow.setStyleSheet("background-color: pink;")
+        # MainWindow.setStyleSheet("#MainWindow{border-image:url(neft.jpg)}")
+        palette = QPalette()
+        palette.setBrush(QPalette.Background, QBrush(QPixmap("neft.jpg")))
+        MainWindow.setPalette(palette)
+        MainWindow.setFont(QFont("Times New Roman", 25))
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit.setGeometry(QtCore.QRect(10, 140, 141, 31))
+        self.lineEdit.setObjectName("lineEdit")
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_2.setGeometry(QtCore.QRect(330, 140, 141, 31))
+        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.lineEdit_3 = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_3.setGeometry(QtCore.QRect(170, 140, 141, 31))
+        self.lineEdit_3.setObjectName("lineEdit_3")
+        self.lineEdit_4 = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_4.setGeometry(QtCore.QRect(490, 140, 141, 31))
+        self.lineEdit_4.setObjectName("lineEdit_4")
+        self.lineEdit_5 = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_5.setGeometry(QtCore.QRect(650, 140, 141, 31))
+        self.lineEdit_5.setObjectName("lineEdit_5")
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        self.label.setGeometry(QtCore.QRect(250, 10, 450, 41))
+        self.label.setObjectName("label")
+        self.label_2 = QtWidgets.QLabel(self.centralwidget)
+        self.label_2.setGeometry(QtCore.QRect(10, 100, 141, 21))
+        self.label_2.setObjectName("label_2")
+        self.label_3 = QtWidgets.QLabel(self.centralwidget)
+        self.label_3.setGeometry(QtCore.QRect(170, 100, 141, 21))
+        self.label_3.setObjectName("label_3")
+        self.label_4 = QtWidgets.QLabel(self.centralwidget)
+        self.label_4.setGeometry(QtCore.QRect(490, 100, 141, 21))
+        self.label_4.setObjectName("label_4")
+        self.label_5 = QtWidgets.QLabel(self.centralwidget)
+        self.label_5.setGeometry(QtCore.QRect(330, 100, 141, 21))
+        self.label_5.setObjectName("label_5")
+        self.label_6 = QtWidgets.QLabel(self.centralwidget)
+        self.label_6.setGeometry(QtCore.QRect(650, 100, 141, 21))
+        self.label_6.setObjectName("label_6")
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton.setGeometry(QtCore.QRect(210, 260, 400, 121))
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton_1 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_1.setGeometry(QtCore.QRect(650, 185, 141, 50))
+        self.pushButton_1.setObjectName("pushButton_1")
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
+        self.menubar.setObjectName("menubar")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+        self.pushButton_1.clicked.connect(self.input_data)
+        self.pushButton.clicked.connect(self.show_Ui_SecondWindow)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def show_window_1(self):
+        self.w1 = ExampleApp()
+        self.w1.show()
+        self.w1.pushButton.clicked.connect(self.w1.close)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "zxc_neft_tool"))
+        self.label.setText(_translate("MainWindow", "Введите данные за прошедший месяц"))
+        self.label.setFont(QFont("Times New Roman", 15))
+        self.label_2.setText(_translate("MainWindow", "Дата (дд.мм.гг)"))
+        self.label_2.setFont(QFont("Times New Roman", 15))
+        self.label_3.setText(_translate("MainWindow", "Нефть, тыс"))
+        self.label_3.setFont(QFont("Times New Roman", 15))
+        self.label_4.setText(_translate("MainWindow", "Обводненность"))
+        self.label_4.setFont(QFont("Times New Roman", 15))
+        self.label_5.setText(_translate("MainWindow", "Кол-во скважин"))
+        self.label_5.setFont(QFont("Times New Roman", 15))
+        self.label_6.setText(_translate("MainWindow", "Жидкость"))
+        self.label_6.setFont(QFont("Times New Roman", 15))
+        self.pushButton.setText(_translate("MainWindow", "Рассчитать результаты на следующий месяц"))
+        self.pushButton.setFont(QFont("Times New Roman", 15))
+        self.pushButton_1.setText(_translate("MainWindow", "Внести данные"))
+        self.pushButton_1.setFont(QFont("Times New Roman", 10))
+
+    def show_Ui_SecondWindow(self):
+        self.w2 = SecondExampleApp()
+        self.w2.show()
+
+    def input_data(self):
+        data = self.lineEdit.text()
+        kol_vo_neft = self.lineEdit_2.text()
+        kol_vo_skvajin = self.lineEdit_3.text()
+        obvodnennost = self.lineEdit_4.text()
+        jidkost = self.lineEdit_5.text()
+        try:
+            self.safe_data = str(data)
+            self.safe_kol_vo_neft = int(kol_vo_neft)
+            self.safe_kol_skvajin = int(kol_vo_skvajin)
+            self.safe_obvodnennost = float(obvodnennost)
+            self.safe_jidkost = int(jidkost)
+            # summ = safe_data
+            # self.label.setText(str(safe_data))
+            lst = np.array([self.safe_data, self.safe_kol_skvajin, self.safe_kol_vo_neft, self.safe_jidkost,
+                            self.safe_obvodnennost])
+            df1 = df.iloc[::-1]
+            df1.loc[len(df.index)] = lst
+            df1 = df1.iloc[::-1]
+            df1 = df1.reset_index()
+            df1 = df1.drop(['index'], axis=1)
+            df1.to_excel('C:/Users/vanoc/PycharmProjects/tatarnikov/neft_dataset_test_2.xlsx', index=False)
+
+        except:
+            self.pushButton_1.setText('Eror')
+
+    def click_linear(self):
+        example = dataset(oil, count, date, water, procentwater)
+        example.linear()
+
+
+class Ui_SecondWindow(object):
+    def setupUi(self, SecondWindow):
+        SecondWindow.setObjectName("SecondWindow")
+        SecondWindow.resize(800, 600)
+        palette = QPalette()
+        palette.setBrush(QPalette.Background, QBrush(QPixmap("neft.jpg")))
+        SecondWindow.setPalette(palette)
+        self.centralwidget = QtWidgets.QWidget(SecondWindow)
+        self.centralwidget.setObjectName("centralwidget")
+
+        self.verticalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(80, -20, 800, 700))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        example = dataset(oil, count, date, water, procentwater)
+        example.plot_lib()
+        self.verticalLayout.addWidget(example.plot_lib())
+
+        self.label_second = QtWidgets.QLabel(self.centralwidget)
+        self.label_second.setGeometry(QtCore.QRect(100, 10, 700, 81))
+        # self.label_second.resize(500,200)
+        self.label_second.setObjectName("label")
+        SecondWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(SecondWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 725, 22))
+        self.menubar.setObjectName("menubar")
+        SecondWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(SecondWindow)
+        self.statusbar.setObjectName("statusbar")
+        SecondWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(SecondWindow)
+        QtCore.QMetaObject.connectSlotsByName(SecondWindow)
+
+    def retranslateUi(self, SecondWindow):
+        _translate = QtCore.QCoreApplication.translate
+        SecondWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.label_second.setText(
+            _translate("MainWindow", "График результатов за прошлые года с прогнозированием результата"))
+        self.label_second.setFont(QFont("Times New Roman", 15))
+
+
+class ExampleApp(QtWidgets.QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+
+
+class SecondExampleApp(QtWidgets.QMainWindow, Ui_SecondWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    w = ExampleApp()
+    w.show_window_1()
+    sys.exit(app.exec_())
